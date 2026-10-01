@@ -1,0 +1,92 @@
+# Status: draft / pending owner review.
+# These entries are a curated shortlist from Mapika's official Decider collection.
+# "candidate" means not yet verified by Neurorium's own runtime.
+# Approved configurations pin exact Hugging Face commit hashes below.
+# Approval is scoped to an exact model and artifact configuration.
+# `approved_for` values are development and production; production means live use.
+# Safetensors record their tensor `dtype`; GGUF records its `weight_variant`.
+# `download_files` contains Hugging Face allow-patterns for that configuration.
+# `artifact_sizes_gb` is approximate download size, keyed by dtype/variant.
+approved_configurations:
+  - id: decider_2b_bfloat16_safetensors
+    model_id: decider_2b
+    artifact_format: safetensors
+    dtype: bfloat16
+    download_files: ["*.safetensors", "*.json", "*.jinja"]
+    approved_for: [development]
+    revision: 533964dae8be954c5b5e19fa4948e48408094c1e
+
+  - id: decider_4b_gguf_q8_0
+    model_id: decider_4b_gguf
+    artifact_format: gguf
+    weight_variant: Q8_0
+    download_files: ["*Q8_0.gguf", "*.json", "*.jinja"]
+    approved_for: [development]
+    revision: 26c404eaa93d4493635bce0564d6fc273af2d979
+
+models:
+  - id: decider_0_8b
+    repo_id: Mapika/decider-0.8b
+    release: v1
+    status: candidate
+    architecture: causal_lm
+    modalities: [text]
+    artifact_format: safetensors
+    dtype: bfloat16
+    artifact_sizes_gb: {bfloat16: 1.4}
+    scoring_method: option_letter_logits
+
+  - id: decider_2b
+    repo_id: Mapika/decider-2b
+    release: v11
+    status: candidate
+    architecture: causal_lm
+    modalities: [text]
+    artifact_format: safetensors
+    dtype: bfloat16
+    artifact_sizes_gb: {bfloat16: 3.8}
+    scoring_method: option_letter_logits
+
+  - id: decider_4b
+    repo_id: Mapika/decider-4b
+    release: v2.1
+    status: candidate
+    architecture: causal_lm
+    modalities: [text]
+    artifact_format: safetensors
+    dtype: bfloat16
+    artifact_sizes_gb: {bfloat16: 8.4}
+    scoring_method: option_letter_logits
+
+  - id: decider_2b_gguf
+    repo_id: Mapika/decider-2b-GGUF
+    release: v11
+    status: candidate
+    architecture: causal_lm
+    modalities: [text]
+    artifact_format: gguf
+    weight_variants: [Q4_K_M, Q8_0, BF16]
+    artifact_sizes_gb: {Q4_K_M: 1.27, Q8_0: 2.01, BF16: 3.78}
+    scoring_method: option_letter_logits
+
+  - id: decider_4b_gguf
+    repo_id: Mapika/decider-4b-GGUF
+    release: v2.1
+    status: candidate
+    architecture: causal_lm
+    modalities: [text]
+    artifact_format: gguf
+    weight_variants: [Q4_K_M, Q8_0, BF16]
+    artifact_sizes_gb: {Q4_K_M: 2.71, Q8_0: 4.48, BF16: 8.42}
+    scoring_method: option_letter_logits
+
+  - id: decider_2b_vision
+    repo_id: Mapika/decider-2b-vision
+    release: v5-text-weights
+    status: candidate
+    architecture: vision_language_model
+    modalities: [text, image]
+    artifact_format: safetensors
+    dtype: bfloat16
+    artifact_sizes_gb: {bfloat16: 4.1}
+    scoring_method: option_letter_logits

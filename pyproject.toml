@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "decision-runtime"
+version = "0.1.0"
+description = "A runtime for decision models and reusable prefix caches."
+
+dependencies = [
+    "torch",
+    "transformers==5.17.0",
+    "huggingface-hub>=1.0",
+    "PyYAML>=6.0",
+    "accelerate",
+    "llama-cpp-python",
+]
+
+[project.optional-dependencies]
+service = ["fastapi>=0.115,<1", "uvicorn>=0.30,<1", "pydantic>=2.9,<3"]
+test = ["httpx>=0.27,<1"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+decision_runtime = ["compatible_models.yaml"]

@@ -1,0 +1,11 @@
+# Status: draft / pending owner review.
+# Same image and mounts; this override only requests NVIDIA GPU access.
+services:
+  inference:
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]

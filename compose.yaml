@@ -1,0 +1,37 @@
+# Status: draft / pending owner review.
+services:
+  inference:
+    build: .
+    image: "decision-runtime:${IMAGE_TAG:-local}"
+    ports:
+      - "127.0.0.1:8000:8000"
+    environment:
+      MODEL_CONFIGURATION_ID: decider_2b_bfloat16_safetensors
+      DEVICE: "${DEVICE:-auto}"
+      GPU_MEMORY_BUDGET_GB: "${GPU_MEMORY_BUDGET_GB:-}"
+      TORCH_THREADS: "4"
+      MODELS_DIR: /data/models
+      PREFIX_CACHE_DIR: /data/prefix_caches
+      LOGS_DIR: /data/logs
+      HF_HUB_OFFLINE: "1"
+      TRANSFORMERS_OFFLINE: "1"
+    volumes:
+      - type: bind
+        source: "${MODELS_MOUNT:?Set MODELS_MOUNT}"
+        target: /data/models
+      - type: bind
+        source: "${PREFIX_CACHES_MOUNT:?Set PREFIX_CACHES_MOUNT}"
+        target: /data/prefix_caches
+      - type: bind
+        source: "${LOGGING_MOUNT:?Set LOGGING_MOUNT}"
+        target: /data/logs
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/v1/health', timeout=5)"
+      interval: 30s
+      timeout: 10s
+      start_period: 180s
+      retries: 5
