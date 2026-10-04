@@ -5,14 +5,20 @@ import os
 from contextlib import asynccontextmanager
 from pathlib import Path
 from time import perf_counter
-from typing import Annotated
+from typing import Annotated, Literal
 
 import torch
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel, ConfigDict, Field, StrictStr, field_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    StrictStr,
+    field_validator,
+)
 
-from .device_selection import select_device
+from .device_selection import select_device, select_gguf_device
 from .runtime import DecisionRuntime
 from .service import InferenceService, InvalidState, UnknownHandle
 
@@ -23,19 +29,28 @@ class StateRequest(BaseModel):
     suffix_text: StrictStr
 
 
+class DecisionOptions(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    temperature: Annotated[float, Field(gt=0, allow_inf_nan=False)] | None = None
+    diagnostics: bool | None = None
+
+
 class QuestionRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
     id: Annotated[StrictStr, Field(min_length=1)]
-    stem: Annotated[StrictStr, Field(min_length=1)]
-    rubric: StrictStr
-    choices: Annotated[list[Annotated[StrictStr, Field(min_length=1)]], Field(min_length=2, max_length=10)]
+    type: Literal["choice"]
+    instructions: Annotated[StrictStr, Field(min_length=1)]
+    criteria: dict[StrictStr, StrictStr | None]
+    decision_options: DecisionOptions | None = None
 
-    @field_validator("choices")
+    @field_validator("criteria")
     @classmethod
-    def unique_choices(cls, choices):
-        if len(set(choices)) != len(choices):
-            raise ValueError("Choices must be unique.")
-        return choices
+    def valid_criteria(cls, criteria):
+        if not 2 <= len(criteria) <= 64:
+            raise ValueError("Criteria must contain 2–64 choices.")
+        if any(not key.strip() for key in criteria):
+            raise ValueError("Criterion keys must be non-empty strings.")
+        return criteria
 
 
 def load_service() -> InferenceService:
@@ -51,12 +66,13 @@ def load_service() -> InferenceService:
         models_dir=os.environ.get("MODELS_DIR", str(data_dir / "models")),
         cache_dir=os.environ.get("PREFIX_CACHE_DIR", str(data_dir / "prefix_caches")),
     )
-    if runtime.approved_configuration["artifact_format"] != "safetensors":
-        raise ValueError("The state/question service currently supports Safetensors only.")
     budget_text = os.environ.get("GPU_MEMORY_BUDGET_GB")
     gpu_budget = float(budget_text) if budget_text else None
-    dtype = getattr(torch, runtime.approved_configuration["dtype"])
-    runtime.device, reason = select_device(requested_device, dtype, gpu_budget)
+    if runtime.approved_configuration["artifact_format"] == "gguf":
+        runtime.device, reason = select_gguf_device(requested_device, gpu_budget)
+    else:
+        dtype = getattr(torch, runtime.approved_configuration["dtype"])
+        runtime.device, reason = select_device(requested_device, dtype, gpu_budget)
     print(f"Selected device: {runtime.device}. {reason}")
 
     started = perf_counter()
@@ -120,7 +136,11 @@ def create_app(service: InferenceService | None = None) -> FastAPI:
 
     @app.post("/v1/runs/{run_id}/states/{state_cache_key}/questions")
     def ask_question(run_id: str, state_cache_key: str, body: QuestionRequest, request: Request):
-        return request.app.state.service.ask_question(run_id, state_cache_key, body.model_dump())
+        return request.app.state.service.ask_question(
+            run_id,
+            state_cache_key,
+            body.model_dump(exclude_none=True, exclude_unset=True),
+        )
 
     @app.delete("/v1/runs/{run_id}/states/{state_cache_key}")
     def release_state(run_id: str, state_cache_key: str, request: Request):

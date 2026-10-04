@@ -1,20 +1,25 @@
 # Status: draft / pending owner review.
 services:
   inference:
-    build: .
+    build:
+      context: .
+      args:
+        GGUF_BACKEND: "${GGUF_BACKEND:-none}"
     image: "decision-runtime:${IMAGE_TAG:-local}"
     ports:
       - "127.0.0.1:8000:8000"
     environment:
-      MODEL_CONFIGURATION_ID: decider_2b_bfloat16_safetensors
+      MODEL_CONFIGURATION_ID: "${MODEL_CONFIGURATION_ID:-decider_2b_bfloat16_safetensors}"
       DEVICE: "${DEVICE:-auto}"
       GPU_MEMORY_BUDGET_GB: "${GPU_MEMORY_BUDGET_GB:-}"
-      TORCH_THREADS: "4"
+      TORCH_THREADS: "${TORCH_THREADS:-4}"
+      GGUF_CONTEXT_TOKENS: "${GGUF_CONTEXT_TOKENS:-4096}"
+      GGUF_BATCH_TOKENS: "${GGUF_BATCH_TOKENS:-64}"
       MODELS_DIR: /data/models
       PREFIX_CACHE_DIR: /data/prefix_caches
       LOGS_DIR: /data/logs
-      HF_HUB_OFFLINE: "1"
-      TRANSFORMERS_OFFLINE: "1"
+      HF_HUB_OFFLINE: "${HF_HUB_OFFLINE:-1}"
+      TRANSFORMERS_OFFLINE: "${TRANSFORMERS_OFFLINE:-1}"
     volumes:
       - type: bind
         source: "${MODELS_MOUNT:?Set MODELS_MOUNT}"

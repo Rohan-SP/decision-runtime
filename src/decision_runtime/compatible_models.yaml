@@ -16,6 +16,14 @@ approved_configurations:
     approved_for: [development]
     revision: 533964dae8be954c5b5e19fa4948e48408094c1e
 
+  - id: decider_4b_bfloat16_safetensors
+    model_id: decider_4b
+    artifact_format: safetensors
+    dtype: bfloat16
+    download_files: ["*.safetensors", "*.json", "*.jinja"]
+    approved_for: [development]
+    revision: eb5fbdfc9448473ec25e399882912863afbdb70e
+
   - id: decider_4b_gguf_q8_0
     model_id: decider_4b_gguf
     artifact_format: gguf
@@ -33,6 +41,7 @@ models:
     modalities: [text]
     artifact_format: safetensors
     dtype: bfloat16
+    decision_settings_file: decider_config.json
     artifact_sizes_gb: {bfloat16: 1.4}
     scoring_method: option_letter_logits
 
@@ -44,6 +53,7 @@ models:
     modalities: [text]
     artifact_format: safetensors
     dtype: bfloat16
+    decision_settings_file: decider_config.json
     artifact_sizes_gb: {bfloat16: 3.8}
     scoring_method: option_letter_logits
 
@@ -55,6 +65,7 @@ models:
     modalities: [text]
     artifact_format: safetensors
     dtype: bfloat16
+    decision_settings_file: decider_config.json
     artifact_sizes_gb: {bfloat16: 8.4}
     scoring_method: option_letter_logits
 
@@ -66,6 +77,7 @@ models:
     modalities: [text]
     artifact_format: gguf
     weight_variants: [Q4_K_M, Q8_0, BF16]
+    decision_settings_file: decider_config.json
     artifact_sizes_gb: {Q4_K_M: 1.27, Q8_0: 2.01, BF16: 3.78}
     scoring_method: option_letter_logits
 
@@ -77,6 +89,7 @@ models:
     modalities: [text]
     artifact_format: gguf
     weight_variants: [Q4_K_M, Q8_0, BF16]
+    decision_settings_file: decider_config.json
     artifact_sizes_gb: {Q4_K_M: 2.71, Q8_0: 4.48, BF16: 8.42}
     scoring_method: option_letter_logits
 
@@ -88,5 +101,6 @@ models:
     modalities: [text, image]
     artifact_format: safetensors
     dtype: bfloat16
+    decision_settings_file: decider_config.json
     artifact_sizes_gb: {bfloat16: 4.1}
     scoring_method: option_letter_logits

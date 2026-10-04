@@ -6,7 +6,6 @@ Writes a report under ignored data/. Logs and prefix caches remain for inspectio
 
 import hashlib
 import json
-import math
 import subprocess
 import time
 from pathlib import Path
@@ -20,9 +19,9 @@ PREFIX = "Context:\nPorco Rosso flies a red aircraft.\n"
 SUFFIX = "Today he leaves Genoa.\n"
 QUESTION = {
     "id": "aircraft-color",
-    "stem": "What color is Porco Rosso's aircraft?",
-    "rubric": "Use the stated facts.",
-    "choices": ["Red", "Blue"],
+    "type": "choice",
+    "instructions": "Use the stated facts. What color is Porco Rosso's aircraft?",
+    "criteria": {"RED": "The aircraft is red.", "BLUE": "The aircraft is blue."},
 }
 
 
@@ -72,7 +71,7 @@ def ask_once(close=True):
             "POST", path + f"/states/{prepared['state_cache_key']}/questions",
             QUESTION,
         )
-        assert packet["answer"]["choice"] == "Red", packet
+        assert packet["answer"]["choice"] == "RED", packet
         completed = True
         return {
             **run, **prepared,
@@ -104,7 +103,8 @@ def main():
     model_before = request("GET", "/v1/model")
     print("Preparing state and asking the first question...", flush=True)
     first = ask_once(close=False)
-    cache_file = caches / f"{first['prefix_cache_key']}.pt"
+    cache_extension = ".npz" if model_before["model_info"]["artifact_format"] == "gguf" else ".pt"
+    cache_file = caches / f"{first['prefix_cache_key']}{cache_extension}"
     cache_before = digest(cache_file)
     decision_path = logs / first["run_id"] / "decisions" / f"{first['decision_id']}.json"
     record_before = digest(decision_path)
@@ -130,8 +130,8 @@ def main():
     second = ask_once()
     assert second["metadata"]["prefix_cache_reused"] is True
     assert first["prefix_cache_key"] == second["prefix_cache_key"]
-    for choice, probability in first["answer"]["probabilities"].items():
-        assert math.isclose(probability, second["answer"]["probabilities"][choice], abs_tol=1e-6)
+    assert set(first["answer"]["probabilities"]) == set(QUESTION["criteria"])
+    assert set(second["answer"]["probabilities"]) == set(QUESTION["criteria"])
     weights_after = {
         str(path.relative_to(models)): (path.stat().st_size, path.stat().st_mtime_ns)
         for path in models.rglob("*") if path.is_file()
@@ -149,7 +149,7 @@ def main():
     report = {
         "container_recreated": True, "weights_unchanged": True,
         "saved_prefix_unchanged": True, "saved_decision_unchanged": True,
-        "prefix_reused_after_restart": True, "probabilities_match": True,
+        "prefix_reused_after_restart": True, "keyed_answers_returned": True,
         "old_run_expired": True, "first": first, "second": second,
         "model_info": model_after["model_info"],
     }

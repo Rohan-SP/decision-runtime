@@ -6,3 +6,6 @@ build/
 dist/
 /data/
 .env
+
+# Local agent instructions; keep machine/user-specific workflow rules untracked.
+/AGENTS.md

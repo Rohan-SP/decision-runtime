@@ -8,10 +8,6 @@ from uuid import uuid4
 class DecisionLogger:
     """Store self-contained records of workflow decisions."""
 
-    # kjl2: Accommodate GGUF model artifacts when implementing log capture,
-    # including the exact file/weight variant and backend settings needed
-    # to recreate a run; do not assume Transformers/Safetensors-only metadata.
-
     def __init__(
         self,
         logs_dir: str | Path | None = None,

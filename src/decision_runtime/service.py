@@ -1,7 +1,9 @@
 """Coordinate one loaded model, isolated runs, state handles, and decision logs."""
 
+import copy
 import hashlib
 import platform
+import random
 import sys
 from dataclasses import dataclass, field
 from importlib.metadata import version
@@ -92,7 +94,7 @@ class InferenceService:
             if not prefix_ids:
                 raise InvalidState("The prefix must contain reusable tokens before the suffix.")
             prefix_key = self.runtime.build_prefix_cache_key(prefix_ids)
-            reused = (self.runtime.cache_dir / f"{prefix_key}.pt").is_file()
+            reused = self.runtime.prefix_cache_path(prefix_key).is_file()
             prepared = self.runtime.prepare_state_cache(prefix_text, suffix_text)
             self._synchronize()
             elapsed = perf_counter() - started
@@ -111,6 +113,12 @@ class InferenceService:
             if state_cache_key not in run.states:
                 raise UnknownHandle("Unknown state for this run; prepare the state again.")
             state = run.states[state_cache_key]
+            question = copy.deepcopy(question)
+            # Randomize the keyed alternatives on every call. The exact order
+            # used for scoring is retained in the question log and prompt.
+            criteria = list(question["criteria"].items())
+            random.SystemRandom().shuffle(criteria)
+            question["criteria"] = dict(criteria)
             self._synchronize()
             started = perf_counter()
             answer = self.runtime.ask_question(state_cache_key, question)
